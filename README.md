@@ -40,6 +40,10 @@ cargo run --features gui --bin packetlens-gui
 cargo build --release --features gui --bin packetlens-gui
 ```
 
-Pick an adapter (one that is up and has an IPv4 address is preselected) and press **Start capture**, or **Open .pcap…** to view a capture file. The window shows a live packet table, a details pane with decoded headers and a hex dump for the selected packet, protocol and top-source summaries, and a packets-per-second chart. The filter box ANDs its terms: protocol names (`tcp`, `arp`), address fragments (`10.0.16.9`) and `port 443`. The table keeps the most recent 100,000 packets; the statistics count all of them. Live capture in the window runs until you press Stop.
+Pick an adapter (the one carrying your default route is preselected, so virtual adapters such as Hyper-V/WSL are skipped) and press **Start capture**, or **Open .pcap…** to view a capture file. The window shows a live packet table, a details pane with decoded headers and a hex dump for the selected packet, protocol and top-source summaries, and a packets-per-second chart. The filter box ANDs its terms: protocol names (`tcp`, `arp`), address fragments (`10.0.16.9`) and `port 443`. The table keeps the most recent 100,000 packets; the statistics count all of them. Live capture in the window runs until you press Stop.
 
 The window uses DirectX 12, Vulkan or Metal, not OpenGL, which crashed on some Windows drivers. Set `WGPU_BACKEND` (e.g. `dx12`, `vulkan`, `gl`) to override.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
