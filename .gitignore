@@ -1,0 +1,4 @@
+/target/
+/captures/*
+!/captures/sample.pcap
+/npcap-sdk*/
