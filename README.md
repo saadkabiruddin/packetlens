@@ -1,5 +1,7 @@
 # PacketLens
-Dependency-free Rust CLI for offline Ethernet/IPv4 packet inspection.
+Rust packet analyzer for Ethernet/IPv4: a dependency-free CLI for offline PCAP files, with optional live capture (Npcap/libpcap) and an egui desktop window.
+
+![PacketLens desktop window capturing live traffic](docs/screenshot.png)
 
 ## Run
 Install Rust using rustup. From this directory:
@@ -16,7 +18,7 @@ The synthetic capture contains one TCP, one UDP and one ICMP packet (180 capture
 `src/lib.rs` contains PCAP reading and Ethernet, IPv4 and transport parsing. `src/stats.rs` decodes each packet into a summary and keeps the running statistics shared by the CLI (`src/main.rs`, `src/live.rs`) and the desktop window (`src/bin/gui.rs`). Each parser validates lengths before indexing and borrows payload slices. PCAP records are read one at a time, with a 16 MiB per-record allocation cap.
 
 ## Limitations
-No IPv6 decoding, fragment reassembly, checksum validation, encrypted payload decoding or full protocol conformance validation. Truncated capture records are counted separately from malformed packets. The malformed count reflects structural parsing checks, not proof of malicious traffic. Source-address statistics grow with unique addresses. The sample is synthetic; performance and accuracy on real traffic are not benchmarked.
+No IPv6 decoding, fragment reassembly, checksum validation, encrypted payload decoding or full protocol conformance validation. Truncated capture records are counted separately from malformed packets. The malformed count reflects structural parsing checks, not proof of malicious traffic. Outgoing packets captured before Large Send Offload splits them can exceed the MTU and carry an IPv4 total length of 0; PacketLens then uses the captured length instead of counting them as malformed. Source-address statistics grow with unique addresses. The sample is synthetic; performance and accuracy on real traffic are not benchmarked.
 
 ## Live capture (v1.1)
 

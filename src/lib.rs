@@ -33,7 +33,12 @@ pub struct Ipv4<'a> {
 pub fn ipv4(b: &[u8]) -> Result<Ipv4<'_>, &'static str> {
     if b.len() < 20 || b[0] >> 4 != 4 { return Err("invalid IPv4 header"); }
     let header = usize::from(b[0] & 15) * 4;
-    let total = usize::from(be16(&b[2..]));
+    let total = match usize::from(be16(&b[2..])) {
+        // With Large Send Offload, outgoing packets are captured before the NIC splits them,
+        // and the total length is left as 0. Use the captured length instead.
+        0 => b.len(),
+        n => n,
+    };
     if header < 20 || total < header || total > b.len() { return Err("invalid or truncated IPv4 length"); }
     Ok(Ipv4 { source: Ipv4Addr::new(b[12],b[13],b[14],b[15]), destination: Ipv4Addr::new(b[16],b[17],b[18],b[19]), protocol: b[9], fragmented: be16(&b[6..]) & 0x3fff != 0, payload: &b[header..total] })
 }
@@ -101,6 +106,7 @@ mod tests {
     #[test] fn ethernet_header() { let b = [0xff,0xff,0xff,0xff,0xff,0xff,0,1,2,3,4,5,8,0]; let e=ethernet(&b).unwrap(); assert_eq!(e.ethertype,0x0800); assert_eq!(e.source,[0,1,2,3,4,5]); assert!(ethernet(&b[..13]).is_err()); }
     #[test] fn udp_lengths() { let b=[0,53,0,80,0,9,0,0,42]; assert_eq!(transport(17,&b).unwrap(),Transport::Udp{source:53,destination:80,payload:&[42]}); assert!(transport(17,&b[..8]).is_err()); }
     #[test] fn ipv4_invalid() { assert!(ipv4(&[0;20]).is_err()); let mut b=[0;20]; b[0]=0x45;b[3]=20;assert!(ipv4(&b).is_ok()); b[3]=21;assert!(ipv4(&b).is_err()); }
+    #[test] fn ipv4_offloaded_zero_length() { let mut b=vec![0u8;3000]; b[0]=0x45; b[9]=6; let ip=ipv4(&b).unwrap(); assert_eq!(ip.payload.len(),2980); b[0]=0x4f; assert!(ipv4(&b[..60]).is_ok()); assert!(ipv4(&b[..40]).is_err()); }
     #[test] fn sample_capture() { let mut p=Pcap::new(&include_bytes!("../captures/sample.pcap")[..]).unwrap(); for protocol in [6,17,1] { let r=p.next_record().unwrap().unwrap(); let e=ethernet(&r.data).unwrap(); let ip=ipv4(e.payload).unwrap(); assert_eq!(ip.protocol,protocol); assert!(transport(ip.protocol,ip.payload).is_ok()); } assert!(p.next_record().unwrap().is_none()); }
     #[test] fn short_capture() { assert!(Pcap::new(&[0u8;3][..]).is_err()); }
 }
