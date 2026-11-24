@@ -1,5 +1,7 @@
 use std::net::Ipv4Addr;
 use std::io::{self, Read};
+pub mod stats;
+pub use stats::{PacketInfo, Stats};
 
 #[derive(Debug, PartialEq)]
 pub struct Ethernet<'a> {

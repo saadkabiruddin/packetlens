@@ -1,4 +1,5 @@
-use super::Stats;
+use super::packet;
+use packetlens::Stats;
 use pcap::{Capture, Device, Error, Linktype};
 use std::{error::Error as StdError, time::{Duration, Instant}};
 
@@ -32,15 +33,15 @@ pub fn run(args: &[String]) -> Outcome {
     let mut last = start;
     while stats.count < count && start.elapsed() < Duration::from_secs(30) {
         match cap.next_packet() {
-            Ok(packet) => stats.packet(packet.data, packet.header.len, verbose),
+            Ok(p) => packet(&mut stats, p.data, p.header.len, verbose),
             Err(Error::TimeoutExpired) => std::thread::sleep(Duration::from_millis(10)),
-            Err(e) => { stats.report(); return Err(e.into()); }
+            Err(e) => { print!("{}", stats.report()); return Err(e.into()); }
         }
         if last.elapsed() >= Duration::from_secs(1) {
             println!("Live: {} packets | {} captured bytes", stats.count, stats.bytes);
             last = Instant::now();
         }
     }
-    stats.report();
+    print!("{}", stats.report());
     Ok(())
 }
